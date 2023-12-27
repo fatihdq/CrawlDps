@@ -6,17 +6,17 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium_stealth import stealth
 
-XPATH_NAME = '//*[@id="root"]/main/div[4]/div/div/div/div/div/div[1]/div/div/div/div/div/div[3]/div[3]/div[1]/p[1]'
-XPATH_TPS = '//*[@id="root"]/main/div[4]/div/div/div/div/div/div[1]/div/div/div/div/div/div[3]/div[3]/div[1]/p[2]'
-XPATH_KABUPATEN = '//*[@id="root"]/main/div[4]/div/div/div/div/div/div[1]/div/div/div/div/div/div[3]/div[3]/div[3]/div[1]/p[1]'
-XPATH_KECAMATAN = '//*[@id="root"]/main/div[4]/div/div/div/div/div/div[1]/div/div/div/div/div/div[3]/div[3]/div[3]/div[1]/p[2]'
-XPATH_KELURAHAN = '//*[@id="root"]/main/div[4]/div/div/div/div/div/div[1]/div/div/div/div/div/div[3]/div[3]/div[3]/div[1]/p[3]'
-XPATH_ALAMAT = '//*[@id="root"]/main/div[4]/div/div/div/div/div/div[1]/div/div/div/div/div/div[3]/div[3]/div[3]/div[2]/p/span[2]'
+XPATH_NAME = '//*[@id="root"]/main/div[4]/div/div/div/div/div/div[1]/div/div/div/div/div/div/div[3]/div[3]/div[1]/p[1]'
+XPATH_TPS = '//*[@id="root"]/main/div[4]/div/div/div/div/div/div[1]/div/div/div/div/div/div/div[3]/div[3]/div[1]/p[2]'
+XPATH_KABUPATEN = '//*[@id="root"]/main/div[4]/div/div/div/div/div/div[1]/div/div/div/div/div/div/div[3]/div[3]/div[3]/div[1]/p[1]'
+XPATH_KECAMATAN = '//*[@id="root"]/main/div[4]/div/div/div/div/div/div[1]/div/div/div/div/div/div/div[3]/div[3]/div[3]/div[1]/p[2]'
+XPATH_KELURAHAN = '//*[@id="root"]/main/div[4]/div/div/div/div/div/div[1]/div/div/div/div/div/div/div[3]/div[3]/div[3]/div[1]/p[3]'
+XPATH_ALAMAT = '//*[@id="root"]/main/div[4]/div/div/div/div/div/div[1]/div/div/div/div/div/div/div[3]/div[3]/div[3]/div[2]/p/span[2]'
 
-XPATH_INVALID = '//*[@id="root"]/main/div[4]/div/div/div/div/div/div[1]/div/div/div/div/div/h2/b'
+XPATH_INVALID = '//*[@id="root"]/main/div[4]/div/div/div/div/div/div[1]/div/div/div/div/div/div/h2/b'
 
-XPATH_BUTTON_SEARCH = '//*[@id="root"]/main/div[4]/div/div/div/div/div/div[2]/button[2]'
-XPATH_INPUT = '//*[@id="__BVID__19"]'
+XPATH_BUTTON_SEARCH = '//*[@id="root"]/main/div[4]/div/div/div/div/div/div[2]/div/button'
+XPATH_BUTTON_BACK = '//*[@id="root"]/main/div[4]/div/div/div/div/div/div[2]/button'
 
 class DpsCrawler(object):
     def __init__(self,headless):
@@ -79,18 +79,26 @@ class DpsCrawler(object):
     def quit(self):
         self.driver.quit()
     
-    def input(self,nik):
+    def input(self,nik,idx,row):
         try:
-            WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located((By.XPATH,XPATH_INPUT)))
-            self.driver.find_element(By.XPATH ,XPATH_INPUT).send_keys(str(nik))
+            WebDriverWait(self.driver, 30).until(EC.visibility_of_element_located((By.TAG_NAME,'input')))
+            self.driver.find_element(By.TAG_NAME,'input').clear()
+            self.driver.find_element(By.TAG_NAME,'input').send_keys(str(nik))
             return True
         except:
+            self.driver.save_screenshot(f'./ss/error_input/not_registered_{row}_{nik}.png')
             print(f"{nik}: Handle Input NIK Error!")
             return False
 
     def clickSearch(self):
         try:
             self.driver.find_element(By.XPATH, XPATH_BUTTON_SEARCH).click()
+        except:
+            print("Handle Click Search Error!")
+
+    def clickBack(self):
+        try:
+            self.driver.find_element(By.XPATH, XPATH_BUTTON_BACK).click()
         except:
             print("Handle Click Search Error!")
 
@@ -110,7 +118,7 @@ class DpsCrawler(object):
                 loading = False
             except:
                 try:
-                    self.driver.find_element(By.XPATH, XPATH_INVALID)
+                    self.driver.find_element(By.XPATH, XPATH_INVALID).text
                     data.loc[idx,'DPT'] = "Not Registered"
                     self.driver.save_screenshot(f'./ss/not_registered/not_registered_{row}_{nik}_{itter}.png')
                     loading= False
@@ -123,11 +131,12 @@ class DpsCrawler(object):
         return data
     
     def crawl(self,data,idx,row):
-        if self.input(data.loc[idx,'NIK']):
+        if self.input(data.loc[idx,'NIK'],idx,row):
             self.clickSearch()
             data = self.getData(data,idx,row,data.loc[idx,'NIK'])
-            self.driver.refresh()
+            self.clickBack()
         else:
             self.driver.refresh()
+            WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located((By.XPATH, XPATH_NAME)))
         
         return data

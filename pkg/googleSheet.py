@@ -8,8 +8,8 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-START_COL = "A"
-END_COL = "H"
+START_COL = "O"
+END_COL = "V"
 
 COLUMNS_TEMPLATE = 'NIK,DPT,NAMA PEMILIH,TPS,ALAMAT TPS,KABUPATEN,KECAMATAN,KELURAHAN'
 
@@ -104,10 +104,10 @@ class GoogleSheet(object):
         except HttpError as err:
             raise Exception(err)
 
-    def writeRow(self,data,row):
+    def writeRow(self,data_result,row):
         try:
             service = build("sheets", "v4", credentials=self.creds)
-            values = data.T.reset_index().T.values.tolist()[1:]
+            values = data_result.T.reset_index().T.values.tolist()[1:]
             data = [
                 {"range": f"{self.sheet_name}!{START_COL}{row}:{END_COL}{row}", "values": values}
             ]
@@ -118,6 +118,20 @@ class GoogleSheet(object):
                 .batchUpdate(spreadsheetId=self.spreadsheet_id, body=body)
                 .execute()
             )
-        except HttpError as err:
-            raise Exception(err)
+        except:
+            try:
+                service = build("sheets", "v4", credentials=self.creds)
+                values = data_result.T.reset_index().T.values.tolist()[1:]
+                data = [
+                    {"range": f"{self.sheet_name}!{START_COL}{row}:{END_COL}{row}", "values": values}
+                ]
+                body = {"valueInputOption": 'USER_ENTERED', "data": data}
+                result = (
+                    service.spreadsheets()
+                    .values()
+                    .batchUpdate(spreadsheetId=self.spreadsheet_id, body=body)
+                    .execute()
+                )
+            except HttpError as err:
+                print(err)
         

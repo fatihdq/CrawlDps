@@ -29,11 +29,15 @@ if __name__ == "__main__":
         shutil.rmtree('./ss/invalid')
     if os.path.exists('./ss/not_registered'):
         shutil.rmtree('./ss/not_registered')
+    if os.path.exists('./ss/error_input'):
+        shutil.rmtree('./ss/error_input')
 
     if not os.path.exists('./ss/invalid'):
         os.mkdir('./ss/invalid')
     if not os.path.exists('./ss/not_registered'):
         os.mkdir('./ss/not_registered')
+    if not os.path.exists('./ss/error_input'):
+        os.mkdir('./ss/error_input')
 
     gsheet = GoogleSheet(spreadsheet_id = SPREADSHEET_ID,
                          sheet_name=sheet_name,
@@ -44,26 +48,37 @@ if __name__ == "__main__":
 
     start_time = time.time()
     print("Crawling Start...")
-    crawl = DpsCrawler(headless=True)
+    crawl = DpsCrawler(headless=False)
     crawl.start()
     row = int(start_row)
+    not_registered = 0
 
     for idx in range(len(data)):
-        if (idx+1)%RESTART_ITTER == 0:
+        if not_registered == 2:
             crawl.quit()
-            crawl = DpsCrawler(headless=True)
+            crawl = DpsCrawler(headless=False)
             crawl.start()
+            not_registered = 0
             
         progress_bar(idx,len(data))
         if not data.loc[idx,'NIK'] == "" or not pd.isna(data.loc[idx,'NIK']):
             data = crawl.crawl(data,idx,row)
             if data.loc[idx,'DPT'] == "Not Registered":
+                time.sleep(3)
+                data = crawl.crawl(data,idx,row)
+            if data.loc[idx,'DPT'] == "Not Registered":
+                time.sleep(4)
+                data = crawl.crawl(data,idx,row)
+            if data.loc[idx,'DPT'] == "Not Registered":
+                time.sleep(5)
                 data = crawl.crawl(data,idx,row)
 
+            if data.loc[idx,'DPT'] == "Not Registered":
+                not_registered = not_registered + 1
             gsheet.writeRow(data.loc[idx,:],row)
-        
         row = row + 1
         progress_bar(idx+1,len(data))
+        time.sleep(3)
     
     print()
     print(f"{len(data)} Data Successfully Crawled:")
