@@ -5,6 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium_stealth import stealth
+import time
 
 XPATH_NAME = '//*[@id="root"]/main/div[4]/div/div/div/div/div/div[1]/div/div/div/div/div/div/div[3]/div[3]/div[1]/p[1]'
 XPATH_TPS = '//*[@id="root"]/main/div[4]/div/div/div/div/div/div[1]/div/div/div/div/div/div/div[3]/div[3]/div[1]/p[2]'
@@ -116,6 +117,7 @@ class DpsCrawler(object):
                 data.loc[idx,'KELURAHAN'] = str(self.driver.find_element(By.XPATH, XPATH_KELURAHAN).text.split('\n')[-1])
                 data.loc[idx,'ALAMAT TPS'] = str(self.driver.find_element(By.XPATH, XPATH_ALAMAT).text)
                 loading = False
+                time.sleep(2)
             except:
                 try:
                     self.driver.find_element(By.XPATH, XPATH_INVALID).text
@@ -124,6 +126,7 @@ class DpsCrawler(object):
                     loading= False
                 except:
                     loading= True
+                time.sleep(2)
             itter = itter + 1
         if loading == True:
             data.loc[idx,'DPT'] = "Invalid"
