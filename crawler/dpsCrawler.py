@@ -6,6 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium_stealth import stealth
 import time
+import random
 
 XPATH_NAME = '//*[@id="root"]/main/div[4]/div/div/div/div/div/div[1]/div/div/div/div/div/div/div[3]/div[3]/div[1]/p[1]'
 XPATH_TPS = '//*[@id="root"]/main/div[4]/div/div/div/div/div/div[1]/div/div/div/div/div/div/div[3]/div[3]/div[1]/p[2]'
@@ -84,7 +85,9 @@ class DpsCrawler(object):
         try:
             WebDriverWait(self.driver, 30).until(EC.visibility_of_element_located((By.TAG_NAME,'input')))
             self.driver.find_element(By.TAG_NAME,'input').clear()
-            self.driver.find_element(By.TAG_NAME,'input').send_keys(str(nik))
+            for ni in str(nik):
+                self.driver.find_element(By.TAG_NAME,'input').send_keys(ni)
+                time.sleep(random.uniform(0,0.5))
             return True
         except:
             self.driver.save_screenshot(f'./ss/error_input/not_registered_{row}_{nik}.png')
